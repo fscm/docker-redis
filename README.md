@@ -28,7 +28,7 @@ Docker installation instructions can be found
 
 ### Usage
 
-This image as the following Redis utilities:
+This image has the following Redis utilities:
 
 - `benchmark` - The Redis benchmark utility that simulates running several
 commands at the same time.
