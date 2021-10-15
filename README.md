@@ -4,7 +4,7 @@ A small Redis image that can be used to start a Redis server.
 
 ## Supported tags
 
-- `latest`
+- [`latest`](https://github.com/fscm/docker-redis/blob/master/Dockerfile)
 
 ## What is Redis?
 
@@ -69,8 +69,8 @@ docker container run --rm --detach --volume "${PWD}":/data:rw --publish 6379:637
 ```
 
 The previous command uses the current folder for storage but a Docker volume
-can also be used instead to store the data. See below how to create docker
-volumes.
+can also be used instead to store the data. See [below](#creating-volumes) how
+to create docker volumes.
 
 #### Starting a Redis Server (custom configuration file)
 
