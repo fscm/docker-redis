@@ -1,7 +1,7 @@
 # global args
 ARG __BUILD_DIR__="/build"
 ARG __DATA_DIR__="/data"
-ARG __WORK_DIR__="/work"
+ARG REDIS_VERSION="6.2.6"
 
 
 
@@ -9,8 +9,8 @@ FROM fscm/centos:stream as build
 
 ARG __BUILD_DIR__
 ARG __DATA_DIR__
-ARG __WORK_DIR__
-ARG REDIS_VERSION="6.2.6"
+ARG __WORK_DIR__="/work"
+ARG REDIS_VERSION
 ARG __USER__="root"
 ARG __SOURCE_DIR__="${__WORK_DIR__}/src"
 
@@ -194,12 +194,23 @@ FROM scratch
 
 ARG __BUILD_DIR__
 ARG __DATA_DIR__
+ARG REDIS_VERSION
 
 LABEL \
   maintainer="Frederico Martins <https://hub.docker.com/u/fscm/>" \
   vendor="fscm" \
   cmd="docker container run --detach --publish 6379:6379/tcp fscm/redis server" \
-  params="--volume ./:${__DATA_DIR__}:rw"
+  params="--volume $$PWD:${__DATA_DIR__}:rw" \
+  org.label-schema.schema-version="1.0" \
+  org.label-schema.name="fscm/redis" \
+  org.label-schema.description="A small Redis image that can be used to start a Redis server" \
+  org.label-schema.url="https://redis.io/" \
+  org.label-schema.vcs-url="https://github.com/fscm/docker-redis/" \
+  org.label-schema.vendor="fscm" \
+  org.label-schema.version=${REDIS_VERSION} \
+  org.label-schema.docker.cmd="docker container run --detach --rm --publish 6379:6379/tcp fscm/redis server" \
+  org.label-schema.docker.cmd.test="docker container run --detach --rm --publish 6379:6379/tcp fscm/redis server --version" \
+  org.label-schema.docker.params="--volume $$PWD:${__DATA_DIR__}:rw"
 
 EXPOSE 6379/tcp
 
