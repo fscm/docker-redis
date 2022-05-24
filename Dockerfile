@@ -31,7 +31,10 @@ RUN \
     echo '--> setting build env' && \
     set +h && \
     export __NPROC__="$(getconf _NPROCESSORS_ONLN || echo 1)" && \
-    export DCACHE_LINESIZE="$(getconf LEVEL1_DCACHE_LINESIZE || echo 64)" && \
+    #export DCACHE_LINESIZE="$(getconf LEVEL1_DCACHE_LINESIZE || echo 64)" && \
+    export DCACHE_LINESIZE="64" && \
+    export __KARCH__="$(case `arch` in x86_64*) echo x86;; aarch64) echo arm64;; esac)" && \
+    export __MARCH__="$(case `arch` in x86_64*) echo x86-64;; aarch64) echo armv8-a;; esac)" && \
     export MAKEFLAGS="--silent --no-print-directory --jobs ${__NPROC__}" && \
     export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig && \
 # build structure
@@ -75,9 +78,10 @@ RUN \
     KERNEL_VERSION="$(curl --silent --location --retry 3 'https://www.kernel.org/releases.json' | jq -r '.latest_stable.version')" && \
     install --directory "${__SOURCE_DIR__}/kernel" && \
     curl --silent --location --retry 3 "https://cdn.kernel.org/pub/linux/kernel/v${KERNEL_VERSION%%.*}.x/linux-${KERNEL_VERSION}.tar.xz" \
-        | tar xJ --no-same-owner --strip-components=1 -C "${__SOURCE_DIR__}/kernel" $(echo linux-*/{Makefile,arch,include,scripts,tools,usr}) && \
+        | tar xJ --no-same-owner --strip-components=1 -C "${__SOURCE_DIR__}/kernel" && \
     cd "${__SOURCE_DIR__}/kernel" && \
-    make INSTALL_HDR_PATH="/usr/local" headers_install > /dev/null && \
+    make mrproper > /dev/null && \
+    make ARCH="${__KARCH__}" INSTALL_HDR_PATH="/usr/local" headers_install > /dev/null && \
     # The kernel headers that exported to user space are not covered by the GPLv2 license.
     # This is documented in the "Linux kernel licensing rules":
     # https://www.kernel.org/doc/html/latest/process/license-rules.html
@@ -90,7 +94,7 @@ RUN \
         | tar xz --no-same-owner --strip-components=1 -C "${__SOURCE_DIR__}/musl" && \
     cd "${__SOURCE_DIR__}/musl/_build" && \
     ../configure \
-        CFLAGS="-O2 -g0 -s -w -pipe -mtune=generic -DNDEBUG -DCLS=${DCACHE_LINESIZE}" \
+        CFLAGS="-fPIC -O2 -g0 -s -w -pipe -march=${__MARCH__} -mtune=generic -DNDEBUG -DCLS=${__DCACHE_LINESIZE__}" \
         --prefix='/usr/local' \
         --disable-debug \
         --disable-shared \
@@ -114,7 +118,7 @@ RUN \
     cd "${__SOURCE_DIR__}/zlib/_build" && \
     sed -i.orig -e '/(man3dir)/d' ../Makefile.in && \
     CC="musl-gcc -static --static" \
-    CFLAGS="-O2 -g0 -s -w -pipe -mtune=generic -DNDEBUG -DCLS=${DCACHE_LINESIZE}" \
+    CFLAGS="-fPIC -O2 -g0 -s -w -pipe -mmusl -march=${__MARCH__} -mtune=generic -DNDEBUG -DCLS=${__DCACHE_LINESIZE__}" \
     ../configure \
         --prefix='/usr/local' \
         --includedir='/usr/local/include' \
@@ -150,12 +154,11 @@ RUN \
         no-ssl3 \
         no-weak-ssl-ciphers \
         zlib \
-        -pipe \
         -static \
         -DCLS=${DCACHE_LINESIZE} \
         -DNDEBUG \
         -DOPENSSL_NO_HEARTBEATS \
-        -O2 -g0 -s -w -pipe -m64 -mtune=generic '-DDEVRANDOM="\"/dev/urandom\""' && \
+        -fPIC -O2 -g0 -s -w -pipe -mmusl -march=${__MARCH__} -mtune=generic '-DDEVRANDOM="\"/dev/urandom\""' && \
     make > /dev/null && \
     make install_sw > /dev/null && \
     make install_ssldirs > /dev/null && \
@@ -179,7 +182,7 @@ RUN \
     make \
         PREFIX="/usr" \
         CC="musl-gcc -static --static" \
-        CFLAGS="-O2 -g0 -s -w -pipe -mtune=generic -DNDEBUG -DCLS=${DCACHE_LINESIZE}" \
+        CFLAGS="-fPIC -O2 -g0 -s -w -pipe -mmusl -march=${__MARCH__} -mtune=generic -DCLS=${__DCACHE_LINESIZE__}" \
         BUILD_TLS="yes" \
         > /dev/null && \
     make PREFIX="${__BUILD_DIR__}/usr" install > /dev/null && \
