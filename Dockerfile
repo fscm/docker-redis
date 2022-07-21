@@ -1,7 +1,7 @@
 # global args
 ARG __BUILD_DIR__="/build"
 ARG __DATA_DIR__="/data"
-ARG REDIS_VERSION="7.0.0"
+ARG REDIS_VERSION="7.0.4"
 
 
 
@@ -82,7 +82,7 @@ RUN \
     cd "${__SOURCE_DIR__}/kernel" && \
     make mrproper > /dev/null && \
     make ARCH="${__KARCH__}" INSTALL_HDR_PATH="/usr/local" headers_install > /dev/null && \
-    # The kernel headers that exported to user space are not covered by the GPLv2 license.
+    # The kernel headers exported to user-space are not covered by the GPLv2 license.
     # This is documented in the "Linux kernel licensing rules":
     # https://www.kernel.org/doc/html/latest/process/license-rules.html
     cd ~- && \
